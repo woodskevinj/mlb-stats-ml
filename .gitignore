@@ -32,7 +32,9 @@ Thumbs.db
 data/raw/
 data/interim/
 data/processed/
-!data/mlb_players_18.csv
+data/mlb_players_18.csv
+!data/mlb_players_clean.csv
+
 
 # Output directories
 models/
