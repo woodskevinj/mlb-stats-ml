@@ -7,7 +7,7 @@ End-to-end machine learning system predicting MLB player performance metrics usi
 This repository contains a complete Applied ML Engineering workflow, from data ingestion and preprocessing to model serving.
 It uses MLB player statistics to train a regression model that predicts On-Base Percentage (OBP) based on offensive performance metrics.
 
-Developed as part of a 30-day MLOps upskilling sprint, emphasizing reproducibility, pipeline design, and deployable ML systems.
+This project was developed as part of a 30-day MLOps upskilling sprint, emphasizing practical experience with reproducible and deployable ML systems.
 
 🧱 Architecture
 Data (.csv) → EDA & Cleaning → Feature Engineering →
@@ -15,73 +15,68 @@ Pipeline (Scaler + OneHot + Model) → Evaluation → Explainability (SHAP) → 
 
 🧠 Model Objective
 
-Goal: Predict player OBP (on-base percentage) from season stats
+Goal: Predict player OBP (on-base percentage) from season performance stats
 
-Model Type: Linear Regression (wrapped in scikit-learn Pipeline)
+Model Type: Linear Regression via scikit-learn Pipeline
 
 Inputs: games, at-bats, hits, doubles, home runs, walks, strikeouts, etc.
 
-Outputs: Continuous regression prediction (OBP)
+Outputs: Continuous prediction (OBP)
 
 🧰 Environment Setup
-
-<details> <summary><b>Show setup commands</b></summary>
-# 1️⃣ Clone repository
+1️⃣ Clone and Create Virtual Environment
 git clone git@github.com:woodskevinj/mlb-stats-ml.git
 cd mlb-stats-ml
-
-# 2️⃣ Create virtual environment
-
 python3 -m venv venv
 source venv/bin/activate
 
-# 3️⃣ Install dependencies
-
+2️⃣ Install Dependencies
 pip install -r requirements.txt
 
-# 4️⃣ Verify setup
-
+3️⃣ Verify Installation
 python --version
 pip list
 
-</details>
 📁 Directory Layout
 mlb-stats-ml/
 ├── app/
-│   └── mlb_predict.py            # Flask inference API
+│ └── mlb_predict.py # Flask inference API
 │
 ├── data/
-│   ├── mlb_players_18_clean.csv  # Cleaned dataset (local)
-│   └── (raw CSV ignored via .gitignore)
+│ ├── mlb_players_18_clean.csv # Cleaned dataset (local)
+│ └── (raw CSV ignored via .gitignore)
 │
 ├── models/
-│   └── mlb_salary_model.joblib   # Serialized trained model
+│ └── mlb_salary_model.joblib # Serialized trained model
 │
 ├── notebooks/
-│   └── mlb_eda.ipynb             # EDA, preprocessing, model dev, SHAP
+│ └── mlb_eda.ipynb # EDA, preprocessing, model dev, SHAP
 │
-├── requirements.txt              # Reproducible dependencies
-├── .gitignore                    # Ignore data, venv, cache files
-└── README.md                     # Documentation
+├── requirements.txt # Reproducible dependencies
+├── .gitignore # Ignore data, venv, cache files
+└── README.md # Documentation
 
 🧮 Reproducible Training Workflow
 
-<details> <summary><b>Step 1: Data Cleaning & EDA</b></summary>
-import pandas as pd
+EDA + Cleaning (mlb_eda.ipynb)
 
-df = pd.read_csv("data/mlb_players_18.csv")
-df = df.dropna()
-df.to_csv("data/mlb_players_18_clean.csv", index=False)
+Validate schema, inspect for missing values, normalize numeric features.
 
-</details> <details> <summary><b>Step 2: Feature Engineering & Model Pipeline</b></summary>
+Export clean CSV → data/mlb_players_18_clean.csv.
+
+Feature Engineering
+
+Apply StandardScaler to numeric columns.
+
+One-Hot Encode position categorical column (handle_unknown='ignore').
+
+Model Training
+
 from sklearn.pipeline import Pipeline
 from sklearn.compose import ColumnTransformer
 from sklearn.preprocessing import StandardScaler, OneHotEncoder
 from sklearn.linear_model import LinearRegression
 from joblib import dump
-
-numeric_cols = ["games", "AB", "R", "H", "doubles", "HR", "walks", "OPS"]
-categorical_cols = ["position"]
 
 pipeline = Pipeline([
 ('preprocessor', ColumnTransformer([
@@ -90,66 +85,45 @@ pipeline = Pipeline([
 ])),
 ('regressor', LinearRegression())
 ])
-
 pipeline.fit(X_train, y_train)
 dump(pipeline, "models/mlb_salary_model.joblib")
 
-</details> <details> <summary><b>Step 3: Evaluation Metrics</b></summary>
+Evaluation Metrics
+
+MAE, MSE, RMSE, R²
+
 from sklearn.metrics import mean_absolute_error, mean_squared_error, r2_score
 
-y_pred = model.predict(X_test)
-mae = mean_absolute_error(y_test, y_pred)
-rmse = mean_squared_error(y_test, y_pred, squared=False)
-r2 = r2_score(y_test, y_pred)
+📊 Model Explainability (SHAP)
 
-</details>
-📊 Explainability with SHAP
-<details> <summary><b>Step 4: Global and Local Feature Importance</b></summary>
+Use SHAP to compute global and per-sample feature influence.
+
 import shap
 
 explainer = shap.Explainer(model.named_steps["regressor"], X_train)
 shap_values = explainer(X_train)
-
-# Global feature importance
-
 shap.summary_plot(shap_values, X_train, plot_type="bar")
 
-# Local explanation for a single player
+Waterfall visualization for one player:
 
 shap.waterfall_plot(shap_values[0])
 
-</details>
-🌐 Flask Model API
-<details> <summary><b>Flask Endpoint Example</b></summary>
-from flask import Flask, request, jsonify
-import joblib
-import pandas as pd
-
-app = Flask(**name**)
-model = joblib.load("../models/mlb_salary_model.joblib")
-
-@app.route("/predict", methods=["POST"])
-def predict():
-data = request.get_json()
-df = pd.DataFrame([data])
-prediction = model.predict(df)[0]
-return jsonify({"predicted_OBP": round(float(prediction), 3)})
-
-if **name** == "**main**":
-app.run(debug=True)
-
-</details>
+🌐 Flask API Serving
 
 Run locally:
 
 cd app
 python3 mlb_predict.py
 
-Test via curl:
+Test prediction:
 
 curl -X POST http://127.0.0.1:5000/predict \
 -H "Content-Type: application/json" \
--d '{"games":120,"AB":410,"R":68,"H":125,"doubles":20,"HR":14,"walks":40,"OPS":0.725,"position":"OF"}'
+-d '{"games":120,"AB":410,"R":68,"H":125,"doubles":20,"triples":2,"HR":14,"RBI":55,"walks":40,"strike_outs":90,"stolen_bases":8,"caught_stealing_base":3,"AVG":0.305,"SLG":0.420,"OPS":0.725,"position":"OF"}'
+
+Response:
+
+{"predicted_OBP": 0.305}
 
 🔍 Diagnostic Metrics Table
 Metric Formula Description
@@ -157,8 +131,6 @@ MAE mean( yₙ - ŷₙ
 RMSE sqrt(mean((yₙ - ŷₙ)²)) Penalizes large errors
 R² 1 - (SS_res / SS_tot) Model variance explanation
 🧠 Feature Importance via Coefficients
-
-<details> <summary><b>Show example</b></summary>
 import pandas as pd
 
 coeffs = model.named*steps["regressor"].coef*
@@ -166,37 +138,41 @@ importance = pd.DataFrame({
 "Feature": X.columns,
 "Weight": coeffs
 }).sort_values("Weight", ascending=False)
-importance.head(10)
+print(importance.head(10))
 
-</details>
-🐳 Containerization (Planned)
-<details> <summary><b>Dockerfile (Preview)</b></summary>
-FROM python:3.10-slim
-WORKDIR /app
-COPY . /app
-RUN pip install -r requirements.txt
-EXPOSE 5000
-CMD ["python3", "app/mlb_predict.py"]
+🐳 Next Phase: Containerization
 
-</details>
-✅ Current Progress
+Planned Docker structure:
 
-Data Cleaning + EDA
+Dockerfile
+│
+├── FROM python:3.10-slim
+├── COPY . /app
+├── WORKDIR /app
+├── RUN pip install -r requirements.txt
+├── EXPOSE 5000
+└── CMD ["python3", "app/mlb_predict.py"]
 
-Model Training + Evaluation
-
-SHAP Explainability
-
-Flask API Deployment
-
-Dockerization
-
-AWS Deployment
-
-🧾 Reference
+🧾 Reference & Credits
 @article{madewithml,
 author = {Goku Mohandas},
 title = {Setup - Made With ML},
 howpublished = {\url{https://madewithml.com/}},
 year = {2023}
 }
+
+✅ Current Progress
+
+EDA + Cleaning
+
+Feature Engineering
+
+Model Training + Evaluation
+
+Explainability (SHAP)
+
+Flask Deployment
+
+Dockerization
+
+AWS Deployment (EC2 / Lambda)
