@@ -1,7 +1,10 @@
 ---
+
+```markdown
 # ⚾ MLB Player Stats ML Project
 
 End-to-end machine learning system predicting MLB player performance metrics using scikit-learn, SHAP, and Flask. Includes full EDA, preprocessing, model training, explainability, containerization, and serving.
+
 ---
 
 ## 🧩 Project Overview
@@ -16,8 +19,10 @@ Developed as part of a **30-day MLOps upskilling sprint**, emphasizing reproduci
 ## 🧱 Architecture
 
 ```
+
 Data (.csv) → EDA & Cleaning → Feature Engineering →
-Pipeline (Scaler + OneHot + Model) → Evaluation → Explainability (SHAP) → API (Flask) → Docker
+Pipeline (Scaler + OneHot + Model) → Evaluation → Explainability (SHAP) → API (Flask) → Docker → AWS ECR
+
 ```
 
 ---
@@ -177,11 +182,53 @@ curl -X POST http://127.0.0.1:5050/predict \
 
 ---
 
-## ☁️ Next Step (Coming Soon)
+## ☁️ AWS ECR Deployment & Cleanup
 
-- Push container image to **AWS ECR**
-- Deploy to **AWS ECS (Fargate)** as a production-ready ML endpoint
-- Add CI/CD workflow (GitHub Actions)
+<details>
+<summary><b>Push Container to AWS ECR</b></summary>
+
+```bash
+# 1️⃣ Create repository (only once)
+aws ecr create-repository --repository-name mlb-ml-app --region us-east-1
+
+# 2️⃣ Authenticate Docker to ECR
+aws ecr get-login-password --region us-east-1 \
+  | docker login --username AWS --password-stdin <aws_account_id>.dkr.ecr.us-east-1.amazonaws.com
+
+# 3️⃣ Tag image
+docker tag mlb-ml-app:latest <aws_account_id>.dkr.ecr.us-east-1.amazonaws.com/mlb-ml-app:latest
+
+# 4️⃣ Push to ECR
+docker push <aws_account_id>.dkr.ecr.us-east-1.amazonaws.com/mlb-ml-app:latest
+```
+
+</details>
+
+---
+
+<details>
+<summary><b>Clean Up Resources to Avoid Charges</b></summary>
+
+```bash
+# 🧹 Delete image from ECR
+aws ecr batch-delete-image \
+  --repository-name mlb-ml-app \
+  --image-ids imageTag=latest \
+  --region us-east-1
+
+# 🧼 Remove local image
+docker rmi mlb-ml-app
+
+# 🧾 Optional: Delete repository (only if no longer needed)
+aws ecr delete-repository \
+  --repository-name mlb-ml-app \
+  --region us-east-1 \
+  --force
+```
+
+✅ Note: Keeping an empty repository incurs **no cost**.
+
+</details>
 
 ---
 
@@ -192,7 +239,8 @@ curl -X POST http://127.0.0.1:5050/predict \
 - [x] SHAP Explainability
 - [x] Flask API Deployment
 - [x] Docker Containerization
-- [ ] AWS Deployment
+- [x] AWS ECR Upload + Cleanup
+- [ ] AWS ECS (Deployment)
 
 ---
 
@@ -208,3 +256,10 @@ curl -X POST http://127.0.0.1:5050/predict \
 ```
 
 ---
+
+```
+
+---
+
+
+```
