@@ -1,7 +1,8 @@
 ---
 # ⚾ MLB Player Stats ML Project
 
-End-to-end machine learning system predicting MLB player performance metrics using scikit-learn, SHAP, and Flask. Includes full EDA, preprocessing, model training, explainability, containerization, and serving.
+End-to-end machine learning system predicting MLB player performance metrics using **scikit-learn**, **SHAP**, and **Flask**.
+Includes full EDA, preprocessing, model training, explainability, containerization, and cloud deployment readiness.
 ---
 
 ## 🧩 Project Overview
@@ -9,17 +10,15 @@ End-to-end machine learning system predicting MLB player performance metrics usi
 This repository contains a complete **Applied ML Engineering workflow**, from **data ingestion and preprocessing** to **model serving and container deployment**.
 It uses MLB player statistics to train a regression model that predicts **On-Base Percentage (OBP)** from key offensive metrics.
 
-Developed as part of a **30-day MLOps upskilling sprint**, emphasizing reproducibility, modular pipeline design, and real-world deployment readiness.
+Developed as part of a **30-day MLOps upskilling sprint**, emphasizing reproducibility, modular pipeline design, explainability, and real-world deployment readiness.
 
 ---
 
 ## 🧱 Architecture
 
 ```
-
 Data (.csv) → EDA & Cleaning → Feature Engineering →
 Pipeline (Scaler + OneHot + Model) → Evaluation → Explainability (SHAP) → API (Flask) → Docker → AWS ECR
-
 ```
 
 ---
@@ -105,6 +104,73 @@ r2 = r2_score(y_test, y_pred)
 ```
 
 </details>
+
+---
+
+## 🧩 Model Explainability (Enhanced SHAP Insights)
+
+This project integrates **SHAP (SHapley Additive exPlanations)** to provide both global and local interpretability for the regression model.
+The explainability layer now includes **fully labeled features** derived from the pipeline’s transformed feature space, ensuring each numerical and categorical contribution is clearly visible.
+
+<details>
+<summary><b>Global and Local Interpretability</b></summary>
+
+```python
+import shap
+
+# Initialize SHAP explainer
+explainer = shap.Explainer(model.named_steps["regressor"], X_transformed)
+shap_values = explainer(X_transformed)
+
+# Global feature importance
+shap.summary_plot(shap_values, X_transformed, plot_type="bar")
+
+# --- Local Explainability (Labeled Features) ---
+
+encoded_feature_names = preprocessor.get_feature_names_out().tolist()
+sample_raw = X.iloc[[0]]
+sample_transformed = preprocessor.transform(sample_raw)
+
+shap_values_single = explainer(sample_transformed)
+
+# Reconstruct explanation with proper feature names
+shap_values_single = shap.Explanation(
+    values=shap_values_single.values,
+    base_values=shap_values_single.base_values,
+    data=shap_values_single.data,
+    feature_names=encoded_feature_names
+)
+
+# Visualize how each feature contributed to this player's OBP prediction
+shap.waterfall_plot(shap_values_single[0], max_display=10)
+```
+
+✅ **Results:**
+
+- Each feature (e.g., `HR`, `OPS`, `walks`, `position_OF`) now appears clearly in SHAP plots.
+- **Global summary plots** show which features most strongly influence OBP predictions across all players.
+- **Local waterfall plots** reveal how each individual player’s stats push their prediction up or down.
+
+</details>
+
+---
+
+## 🧠 Model Explainability Preview
+
+Here’s a visual summary of SHAP results from this project:
+
+| Global Feature Importance                     | Local Player Breakdown                                   |
+| :-------------------------------------------- | :------------------------------------------------------- |
+| ![SHAP Bar](docs/images/shap_summary_bar.png) | ![SHAP Waterfall](docs/images/shap_waterfall_sample.png) |
+
+> 📊 _Figure: SHAP summary and waterfall plots showing how hitting metrics like HR and OPS influence predicted OBP._
+
+To recreate these visuals:
+
+```bash
+mkdir -p docs/images
+# Then save figures using matplotlib or shap.plots API
+```
 
 ---
 
@@ -234,6 +300,7 @@ aws ecr delete-repository \
 - [x] Data Cleaning + EDA
 - [x] Model Training + Evaluation
 - [x] SHAP Explainability
+- [x] **Enhanced SHAP labeling for interpretability ✅**
 - [x] Flask API Deployment
 - [x] Docker Containerization
 - [x] AWS ECR Upload + Cleanup
@@ -253,10 +320,3 @@ aws ecr delete-repository \
 ```
 
 ---
-
-```
-
----
-
-
-```
