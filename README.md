@@ -1,10 +1,7 @@
 ---
-
-```markdown
 # ⚾ MLB Player Stats ML Project
 
 End-to-end machine learning system predicting MLB player performance metrics using scikit-learn, SHAP, and Flask. Includes full EDA, preprocessing, model training, explainability, containerization, and serving.
-
 ---
 
 ## 🧩 Project Overview
