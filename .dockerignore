@@ -1,0 +1,36 @@
+# Python cache & envs
+__pycache__/
+*.pyc
+*.pyo
+*.pyd
+*.db
+.Python
+venv/
+.env
+
+# Jupyter & logs
+.ipynb_checkpoints/
+*.log
+
+# Data & models (you can mount these later if needed)
+data/*.csv
+*.joblib
+
+# Git & IDE
+.git/
+.gitignore
+.vscode/
+
+venv/
+__pycache__/
+*.pyc
+*.pyo
+*.pyd
+*.db
+*.sqlite3
+.env
+.git
+.gitignore
+*.ipynb
+notebooks/
+data/
